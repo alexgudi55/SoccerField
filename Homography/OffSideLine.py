@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import math
 
 pointsImage = np.array([[1,1]]) 
 pointsField = np.array([[1,1]]) 
@@ -50,17 +49,6 @@ def getPointsField(event,x,y,flags,param):
     if event == cv2.EVENT_LBUTTONUP:
         pointsField = np.append(pointsField,[[x,y]], axis = 0)
 
-def DrawSemiCircle(Point, img):
-	end_point = (34,191)
-	punto = (Point[0],Point[1]) 
-	axes = (15, 15)
-	angle = 0 ;
-	startAngle=0;
-	endAngle=180
-	color = (0, 0, 255)
-	img = cv2.ellipse(img, punto, axes, 
-           angle, startAngle, endAngle, color, -1) 
-	return img
 
 def main():
 	global pointsImage
@@ -91,47 +79,54 @@ def main():
 	cv2.imshow("Mask Inv",imgWithInvMask)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
-
-##########HOMOGRAPHY#############
-	#Free kick#
-	ballPoint = pointsImage[0]
+######Off-side########################
+	lastPlayer = pointsImage[0]
 	pointsImage = np.delete(pointsImage, 0, 0)
 
-	homography, status = cv2.findHomography(pointsImage, pointsField)
-	homographyInv, status = cv2.findHomography(pointsField, pointsImage)
-	#Calculo de punto en portería en Img original transformando punto de "Template field" con la homografía.
-	end_point = (34,191) 
-	end_point = np.append(end_point, np.array([1]), axis=0)  ##Normalize adding 1 [x,y,1]
-	end_point = np.transpose(end_point)
-	newPoint = np.dot(homographyInv, end_point) ###Dot Product
-	s = newPoint[2]    #Extra value
-	newPoint = newPoint*(1/s)
-	newPoint = np.delete(newPoint, 2)
-	#Calculate distance
-	print("homography Inv:    ",homography)
-	TballPoint = np.append(ballPoint, np.array([1]), axis=0)
-	print("Adding 1:  ", TballPoint)
-	TballPoint = np.transpose(TballPoint)
-	print(TballPoint)
-	TballPoint = np.dot(homography, TballPoint) 
-	s = TballPoint[2]
-	TballPoint = TballPoint*(1/s)
-	TballPoint = np.delete(TballPoint, 2)
-	print(TballPoint)
-	distance = (((TballPoint[0]-end_point[0])**2 + (TballPoint[1]-end_point[1])**2)**0.5) / 3.63
-	print(distance)
-	#Trazar linea.
+	homography, status = cv2.findHomography(pointsField, pointsImage)
+	homographyInv, status = cv2.findHomography(pointsImage, pointsField)
+
+	lastPlayer = np.append(lastPlayer, np.array([1]), axis=0)  ##Normalize adding 1 [x,y,1]
+	print(lastPlayer)
+	lastPlayer = np.transpose(lastPlayer)
+	lastPlayerH = np.dot(homographyInv, lastPlayer) ###Dot Product
+	print(lastPlayerH)
+	s = lastPlayerH[2]    #Extra value
+	print(s)
+	lastPlayerH = lastPlayerH*(1/s)
+	lastPlayerH = np.delete(lastPlayerH, 2)
+	print(lastPlayerH)
+
+	##								
+	UpPointH = np.array([[lastPlayerH[0],25,1]])  ##25 is the up coordinate 'y' on the  template Field
+	DwPointH = np.array([[lastPlayerH[0],358,1]]) ##358 is the down coordinate 'y' on the template Field
+	print(UpPointH)
+	print(DwPointH)
+	##Obtain UpPoint
+	UpPointH = np.transpose(UpPointH)
+	UpPoint = np.dot(homography, UpPointH) ###Dot Product
+	s = UpPoint[2]    #Extra value
+	UpPoint = UpPoint*(1/s)
+	UpPoint = np.delete(UpPoint, 2)
+	print(UpPoint)
+	##Obtain Down Point
+	DwPointH = np.transpose(DwPointH)
+	DwPoint = np.dot(homography, DwPointH) ###Dot Product
+	s = DwPoint[2]    #Extra value
+	DwPoint = DwPoint*(1/s)
+	DwPoint = np.delete(DwPoint, 2)
+	print(DwPoint)
+
+	#TrazarLinea
 	color = (0, 0, 255)
-	imgWithMask = cv2.line(imgWithMask, (int(newPoint[0]),int(newPoint[1])), (int(ballPoint[0]),int(ballPoint[1])), color, 2)
-	#Dibujar Semicirculo
-	imgWithMask = DrawSemiCircle(ballPoint, imgWithMask)
-######### Combine Images ##########
+	imgWithMask = cv2.line(imgWithMask, (int(UpPoint[0]),int(UpPoint[1])), (int(DwPoint[0]),int(DwPoint[1])), color, 2)
+
+	######### Combine Images ##########
 	final = cv2.bitwise_or(imgWithMask,imgWithInvMask,mask = mask)
 	final = cv2.add(final,imgWithInvMask)
 	cv2.imshow('res',final)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
-	
 
 if __name__ == '__main__':
     main()
