@@ -55,9 +55,9 @@ def main():
 	global pointsField
 
 	#Read Front View Field Image
-	field = openImage("soccer-field-sizes.png")
+	field = openImage("field.jpg")
 	#Read the image  
-	img = openImage("EnglandGoal.jpg")
+	img = openImage("rmVSpsg.jpg")
 
 	#Select feducial Points.
 	SelectFedPoints(field, img)
@@ -83,13 +83,13 @@ def main():
 	lastPlayer = pointsImage[0]
 	pointsImage = np.delete(pointsImage, 0, 0)
 
-	homography, status = cv2.findHomography(pointsField, pointsImage)
-	homographyInv, status = cv2.findHomography(pointsImage, pointsField)
+	homography, status = cv2.findHomography(pointsImage, pointsField)
+	homographyInv, status = cv2.findHomography(pointsField, pointsImage)
 
 	lastPlayer = np.append(lastPlayer, np.array([1]), axis=0)  ##Normalize adding 1 [x,y,1]
 	print(lastPlayer)
 	lastPlayer = np.transpose(lastPlayer)
-	lastPlayerH = np.dot(homographyInv, lastPlayer) ###Dot Product
+	lastPlayerH = np.dot(homography, lastPlayer) ###Dot Product
 	print(lastPlayerH)
 	s = lastPlayerH[2]    #Extra value
 	print(s)
@@ -98,20 +98,20 @@ def main():
 	print(lastPlayerH)
 
 	##								
-	UpPointH = np.array([[lastPlayerH[0],25,1]])  ##25 is the up coordinate 'y' on the  template Field
-	DwPointH = np.array([[lastPlayerH[0],358,1]]) ##358 is the down coordinate 'y' on the template Field
+	UpPointH = np.array([[lastPlayerH[0],17,1]])  ##25 is the up coordinate 'y' on the  template Field
+	DwPointH = np.array([[lastPlayerH[0],417,1]]) ##358 is the down coordinate 'y' on the template Field
 	print(UpPointH)
 	print(DwPointH)
 	##Obtain UpPoint
 	UpPointH = np.transpose(UpPointH)
-	UpPoint = np.dot(homography, UpPointH) ###Dot Product
+	UpPoint = np.dot(homographyInv, UpPointH) ###Dot Product
 	s = UpPoint[2]    #Extra value
 	UpPoint = UpPoint*(1/s)
 	UpPoint = np.delete(UpPoint, 2)
 	print(UpPoint)
 	##Obtain Down Point
 	DwPointH = np.transpose(DwPointH)
-	DwPoint = np.dot(homography, DwPointH) ###Dot Product
+	DwPoint = np.dot(homographyInv, DwPointH) ###Dot Product
 	s = DwPoint[2]    #Extra value
 	DwPoint = DwPoint*(1/s)
 	DwPoint = np.delete(DwPoint, 2)

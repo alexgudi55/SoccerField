@@ -34,6 +34,11 @@ result = cv2.bitwise_and(field, field, mask = mask)
 im_out = cv2.line(result, (20,300) , (1000,400), color, 9)
 result1 = cv2.bitwise_and(field, field, mask = mask_inv)
 
+kernel = np.ones((5,5),np.uint8)
+mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+cv2.imshow("mask",mask)
+cv2.waitKey(0)
+
 plt.subplot(1, 3, 1)
 plt.imshow(mask, cmap="gray")
 plt.subplot(1, 3, 2)
