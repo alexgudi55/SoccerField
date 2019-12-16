@@ -19,6 +19,6 @@ Area Chica
 
 
 SemiCircle 
-7.33 mts 
+7.3124 mts 
 
  
